@@ -1,0 +1,124 @@
+---
+title: "Report: Exploratory Data Analysis"
+subtitle: Applied Economics & Data Analysis in R (Econ 680/880, Dr. Venoo Kakar)
+author: "Kevin Liu"
+format: html
+editor: visual
+code-fold: true
+toc: false
+toc-location: left
+execute: 
+  echo: true
+  messages: false
+---
+
+## About the data
+
+This dataset was retrieved from Kaggle. The data contains public health information on U.S. residents containing various factors that could influence heart disease. There are 319,795 observations in this dataset, and contain 18 variables that affect an individual's risk for heart disease. This data is from the year 2020.
+
+## Questions
+
+1.  What are the lifestyle choices that affect an individual's risk for heart disease?
+
+2.  How does heart disease prevalence vary across different age groups?
+
+3.  Who is at the greatest risk for heart disease?
+
+## Exploratory Data Analysis
+
+```{r}
+library(ggplot2)
+library(dplyr)
+
+heart_data <- read.csv("C:/Users/Kevin/Downloads/heart_2020_cleaned.csv")
+
+# Gender distribution in data set
+gender_counts <- heart_data %>%
+  count(Sex)
+print(gender_counts)
+
+# 167,805 females & 151,990 males for a total of 319,795 observations. 
+
+# BMI categories
+heart_data <- heart_data %>%
+  mutate(BMI_Category = case_when(
+    BMI < 18.5 ~ "Underweight",
+    BMI >= 18.5 & BMI < 24.9 ~ "Healthy weight",
+    BMI >= 25 & BMI < 29.9 ~ "Overweight",
+    BMI >= 30 ~ "Obese"
+  ))
+
+filtered_data <- heart_data %>%
+  filter(BMI_Category %in% c("Healthy weight", "Overweight", "Obese"))
+
+# Pie Chart of Heart Disease Prevalence between Genders
+
+# This pie chart shows the proportion of heart disease prevalence between males and females. Heart disease is more common amongst males than females.
+
+gender_distribution <- heart_data %>%
+  count(Sex, HeartDisease) %>%
+  group_by(Sex) %>%
+  mutate(percentage = n / sum(n) * 100)
+
+ggplot(data = gender_distribution, aes(x = "", y = percentage, fill = HeartDisease)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar("y") +
+  facet_wrap(~Sex) +
+  labs(title = "Gender Distribution and Heart Disease Prevalence", x = "", y = "") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(), panel.grid = element_blank()) +
+  geom_text(aes(label = paste0(round(percentage, 1), "%")), position = position_stack(vjust = 0.5)) +
+  scale_fill_manual(values = c("No" = "lightblue", "Yes" = "red"))
+
+# Graph of Heart Disease Prevalence by Age Category
+
+# This graph shows that as age increases, heart disease prevalence increases. Age is one of the most consistent indicators of heart disease as proven by the graph. There is a steady and consistent progression in each age category.
+
+age_distribution <- heart_data %>%
+  
+  count(AgeCategory, HeartDisease) %>%
+  group_by(AgeCategory) %>%
+  mutate(percentage = n / sum(n) * 100)
+
+ggplot(data = age_distribution, aes(x = AgeCategory, y = percentage, color = HeartDisease, group = HeartDisease)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 2) +
+  labs(title = "Heart Disease Prevalence by Age Category", x = "Age Category", y = "Percentage") +
+  theme_minimal() +
+  scale_color_manual(values = c("No" = "lightblue", "Yes" = "red")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Bar Chart of Heart Disease Prevalence for Healthy Weight, Overweight, and Obese
+
+# This chart shows the distribution of heart disease prevalence across each BMI category. It is shown that the Obese and Overweight BMI categories have a higher prevalence of heart disease. This shows that weight is directly correlated to heart disease risk. 
+
+ggplot(data = filtered_data, aes(x = BMI_Category, fill = HeartDisease)) +
+  geom_bar(position = "fill", color = "black") +
+  labs(title = "Percentage of Heart Disease Prevalence for Weight Category", x = "BMI Category", y = "Proportion") +
+  theme_minimal() +
+  scale_fill_manual(values = c("No" = "lightblue", "Yes" = "red"))
+
+# Bar Chart of Smoking Status with Heart Disease Prevalence
+
+# This chart shows the prevalence of heart disease in individuals that smoke. Smoking is a lifestyle choice that greatly increases the risk of heart disease. 
+
+ggplot(data = heart_data, aes(x = Smoking, fill = HeartDisease)) +
+  geom_bar(position = "dodge", color = "black") +
+  labs(title = "Smoking Status and Heart Disease Prevalence", x = "Smoking Status", y = "Count") +
+  theme_minimal() +
+  scale_fill_manual(values = c("No" = "lightblue", "Yes" = "red"))
+
+# Bar Chart of Alcohol Drinking Status with Heart Disease Prevalence
+
+# This chart shows the prevalence of heart disease in individuals that consume alcohol regularly. Consuming alcohol is a common lifestyle choice. The data shows that it has little to no effect on heart disease relative to individuals that do not consume alcohol. This is most likely because alcohol affects the liver, and not the heart. However, frequent alcohol consumption may be linked to other poor lifestyle choices.
+
+ggplot(data = heart_data, aes(x = AlcoholDrinking, fill = HeartDisease)) +
+  geom_bar(position = "dodge", color = "black") +
+  labs(title = "Alcohol Drinking Status and Heart Disease Prevalence", x = "Alcohol Drinking Status", y = "Count") +
+  theme_minimal() +
+  scale_fill_manual(values = c("No" = "lightblue", "Yes" = "red"))
+```
+
+## Summary
+
+Age, Weight, and Smoking are the 3 most consistent indicators of an individual's risk for heart disease. Males also have a slightly higher prevalence for heart disease. An individual that would be at greatest risk would be a male who regularly smokes, is of the "Obese", or "Overweight" BMI categories, is not physically active, and is of an older age category. The greater the age category, the greater the risk becomes.
